@@ -1,0 +1,47 @@
+---
+title: "England Postcode Deprivation"
+output: html_notebook
+---
+
+```{r}
+#Useful libraries
+library(tidyverse, readxl)
+library(readxl)
+library(reshape)
+library(zoo)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(data.table)
+##Postcode Data
+#Folder location of Postcode data
+Folder = "\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\Reference Data\\"
+#File name of postcode data
+File = "PCD_OA_LSOA_MSOA_LAD_AUG19_UK_LU.csv"
+#Create data frame with postcode data
+df = data.frame(read.csv(paste(Folder, File,sep=""),1),stringsAsFactors=TRUE)
+```
+```{r}
+
+##Deprivation Data
+#Folder location of Deprivation data
+Folder <- "\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\Demographic and Public health Data\\Deprivation\\"
+#Filename location of Deprivation data
+File = "imd2019lsoa.csv"
+#Read data and create data frame
+Df_Deprivation <- data.frame(read.csv(paste(Folder, File,sep=""),7),stringsAsFactors=TRUE)
+Df_Deprivation
+```
+```{r}
+#Perform a table join on LSOA name
+joined_data <- left_join(df, Df_Deprivation, by=c('lsoa11cd'='LSOA'))
+
+#remove blank IMDs and select specific columns to reduce file size
+joined_data <- joined_data %>% 
+                filter(!is.na(Index.of.Multiple.Deprivation..IMD.))%>%
+                select(pcds,Index.of.Multiple.Deprivation..IMD.)
+
+#Write data
+fwrite(joined_data, paste(Folder, "WY&H postcode--deprivation.csv", sep=""))
+```
+
