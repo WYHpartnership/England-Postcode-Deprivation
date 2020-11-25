@@ -1,2 +1,2 @@
 # England-Postcode-Deprivation
-Data needed and method for to produce Index of Multiple Deprivation at a postcode level
+Data required and method to produce Index of Multiple Deprivation at a postcode level
