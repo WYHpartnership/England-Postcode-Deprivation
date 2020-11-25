@@ -13,7 +13,10 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 library(data.table)
-##Postcode Data
+library(R.utils)
+install.packages("Rtools40")
+library(Rtools)
+##Postcode Data: https://geoportal.statistics.gov.uk/datasets/06938ffe68de49de98709b0c2ea7c21a
 #Folder location of Postcode data
 Folder = "\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\Reference Data\\"
 #File name of postcode data
@@ -23,7 +26,7 @@ df = data.frame(read.csv(paste(Folder, File,sep=""),1),stringsAsFactors=TRUE)
 ```
 ```{r}
 
-##Deprivation Data
+##Deprivation Data: https://opendatacommunities.org/resource?uri=http%3A%2F%2Fopendatacommunities.org%2Fdata%2Fsocietal-wellbeing%2Fimd2019%2Findices
 #Folder location of Deprivation data
 Folder <- "\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\Demographic and Public health Data\\Deprivation\\"
 #Filename location of Deprivation data
@@ -31,17 +34,41 @@ File = "imd2019lsoa.csv"
 #Read data and create data frame
 Df_Deprivation <- data.frame(read.csv(paste(Folder, File,sep=""),7),stringsAsFactors=TRUE)
 Df_Deprivation
+
+#LSOA to ICS/STP lookup: https://geoportal.statistics.gov.uk/datasets/520e9cd294c84dfaaf97cc91494237ac_0
+Folder <-"\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\Reference Data\\"
+File = "LSOA_to_STP.csv"
+#Read data and create data frame
+LSOA_STP <- data.frame(read.csv(paste(Folder, File,sep=""),1),stringsAsFactors=TRUE)
 ```
+
 ```{r}
 #Perform a table join on LSOA name
 joined_data <- left_join(df, Df_Deprivation, by=c('lsoa11cd'='LSOA'))
 
+#find STP Name
+joined_data <- left_join(joined_data, LSOA_STP, by=c('lsoa11cd'='LSOA11CD'))
+
+joined_data
 #remove blank IMDs and select specific columns to reduce file size
 joined_data <- joined_data %>% 
                 filter(!is.na(Index.of.Multiple.Deprivation..IMD.))%>%
-                select(pcds,Index.of.Multiple.Deprivation..IMD.)
+                select(STP19NM, CCG19NM, pcds,Index.of.Multiple.Deprivation..IMD.)
 
+#Calculate list of ICSs
+STPs<-unique(joined_data$STP19NM)
 #Write data
-fwrite(joined_data, paste(Folder, "WY&H postcode--deprivation.csv", sep=""))
+#fwrite(joined_data, paste(Folder, "WY&H postcode--deprivation.csv", sep=""))
+
+folder <-"\\\\wdpct-san.xthis.nhs.uk\\WakefieldCCG\\Wakefield CCG\\Business Unit\\Meetings and Groups\\10CC & Healthy Futures\\2016\\BI\\R\\Postcode-Deprivation\\"
+
+for (STP in STPs)
+{
+filtered_data <- joined_data %>% 
+                filter(STP19NM==STP)
+fwrite(filtered_data, paste(folder,STP," postcode--deprivation.csv", sep=""))
+}
+
+
 ```
 
